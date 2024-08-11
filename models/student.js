@@ -1,17 +1,10 @@
 import mongoose from 'mongoose';
 
 const studentSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Name is required']
-  },
-  mentor: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Mentor',
-    default: null // Allow null if no mentor is assigned
-  }
+  name: { type: String, required: true },
+  mentor: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' },
+  previousMentor: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' },
 });
 
 const Student = mongoose.model('Student', studentSchema);
-
 export default Student;

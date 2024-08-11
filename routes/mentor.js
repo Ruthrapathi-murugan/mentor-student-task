@@ -1,5 +1,6 @@
 import express from 'express';
 import Mentor from '../models/mentor.js';
+import Student from '../models/student.js';
 
 const router = express.Router();
 
@@ -21,6 +22,23 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Get all students assigned to a mentor
+router.get('/:mentorId/students', async (req, res) => {
+  try {
+    const mentorId = req.params.mentorId;
+
+    const students = await Student.find({ mentor: mentorId });
+
+    if (students.length === 0) {
+      return res.status(404).json({ message: 'No students found for this mentor' });
+    }
+
+    res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get all mentors
 router.get('/', async (req, res) => {
   try {
@@ -32,3 +50,4 @@ router.get('/', async (req, res) => {
 });
 
 export default router;
+  

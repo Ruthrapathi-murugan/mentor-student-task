@@ -1,36 +1,72 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import Student from '../models/student.js';
+import express from "express";
+import mongoose from "mongoose";
+import Student from "../models/student.js";
 
 const router = express.Router();
 
-// Assign a mentor to a student
-router.put('/:id/assign-mentor', async (req, res) => {
+// Create a new student
+router.post('/', async (req, res) => {
   try {
-    const studentId = req.params.id; // Student ID from URL
-    const { mentorId } = req.body; // Mentor ID from request body
+    const { name } = req.body;
 
-    // Validate the ObjectId format
-    if (!mongoose.Types.ObjectId.isValid(studentId) || !mongoose.Types.ObjectId.isValid(mentorId)) {
-      return res.status(400).json({ message: 'Invalid ID format' });
+    if (!name) {
+      return res.status(400).json({ message: 'Name is required' });
     }
 
-    // Find the student by ID
-    const student = await Student.findById(studentId);
-    if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
-    }
+    const student = new Student({ name });
+    const savedStudent = await student.save();
 
-    // Update the mentor field
-    student.mentor = mentorId;
-    const updatedStudent = await student.save();
-
-    // Return the updated student
-    res.status(200).json(updatedStudent);
+    res.status(201).json(savedStudent);
   } catch (error) {
-    console.error('Error assigning mentor:', error); // Log the error
     res.status(500).json({ message: error.message });
   }
 });
+
+// Assign a mentor to a student
+router.put("/:id/assign-mentor", async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { mentorId } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(studentId) || !mongoose.Types.ObjectId.isValid(mentorId)) {
+      return res.status(400).json({ message: "Invalid ID format" });
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    student.previousMentor = student.mentor;
+    student.mentor = mentorId;
+
+    const updatedStudent = await student.save();
+    res.status(200).json(updatedStudent);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get the previous mentor for a student
+router.get("/:studentId/previous-mentor", async (req, res) => {
+  try {
+    const studentId = req.params.studentId;
+
+    const student = await Student.findById(studentId).populate("previousMentor");
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    if (!student.previousMentor) {
+      return res.status(404).json({ message: "No previous mentor found for this student" });
+    }
+
+    res.status(200).json(student.previousMentor);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 export default router;
